@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/layout/Layout';
-import { DashboardCard } from '../components/ui/DashboardCard';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Calendar, FileText, DollarSign, CheckCircle } from 'lucide-react';
+import { Calendar, FileText, DollarSign, CheckCircle, Clock } from 'lucide-react';
 import { attendanceService, leaveService, payrollService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -11,59 +8,22 @@ export const EmployeeDashboard = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [todayAttendance, setTodayAttendance] = useState(null);
-  const [stats, setStats] = useState({
-    totalPresent: 0,
-    totalLeaves: 0,
-    pendingLeaves: 0,
-    averageHours: 0,
-  });
-  const [recentAttendance, setRecentAttendance] = useState([]);
-  const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchTodayAttendance();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchTodayAttendance = async () => {
     try {
       setLoading(true);
-      setError('');
-      const now = new Date();
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      const today = now.toISOString().split('T')[0];
-
-      const [attendanceResponse, todayResponse, leaveResponse] = await Promise.all([
-        attendanceService.getMyAttendance(
-          monthStart.toISOString().split('T')[0],
-          monthEnd.toISOString().split('T')[0]
-        ),
-        attendanceService.getMyAttendance(today, today),
-        leaveService.getMyLeaves(),
-      ]);
-
-      const attendanceData = attendanceResponse.data;
-      const presentCount = attendanceData.filter(a => a.status === 'present').length;
-      const totalHours = attendanceData.reduce((sum, a) => sum + (a.workHours || 0), 0);
-      const avgHours = attendanceData.length > 0 ? (totalHours / attendanceData.length).toFixed(1) : 0;
-
-      const leaveData = leaveResponse.data;
-      const totalLeavesCount = leaveData.length;
-      const pendingLeavesCount = leaveData.filter(l => l.status === 'pending').length;
-
-      setStats({
-        totalPresent: presentCount,
-        totalLeaves: totalLeavesCount,
-        pendingLeaves: pendingLeavesCount,
-        averageHours: avgHours,
-      });
-      setRecentAttendance(attendanceData.slice(0, 5));
-      setTodayAttendance(todayResponse.data[0] || null);
+      const today = new Date().toISOString().split('T')[0];
+      const response = await attendanceService.getMyAttendance(today, today);
+      setTodayAttendance(response.data[0] || null);
     } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data');
+      console.error('Error fetching attendance:', err);
     } finally {
       setLoading(false);
     }
@@ -81,7 +41,7 @@ export const EmployeeDashboard = () => {
         await attendanceService.checkOut();
         setMessage('Checked out successfully');
       }
-      await fetchDashboardData();
+      await fetchTodayAttendance();
     } catch (err) {
       setError(err.response?.data?.message || `Failed to ${action === 'checkin' ? 'check in' : 'check out'}`);
     } finally {
@@ -91,6 +51,11 @@ export const EmployeeDashboard = () => {
 
   const canCheckIn = !todayAttendance?.checkIn;
   const canCheckOut = Boolean(todayAttendance?.checkIn && !todayAttendance?.checkOut);
+  const statusColor = todayAttendance?.status === 'present' ? 'bg-green-500' : 'bg-slate-400';
+
+  const userName = user?.personalDetails 
+    ? `${user.personalDetails.firstName} ${user.personalDetails.lastName}`
+    : 'User';
 
   if (loading) {
     return (
@@ -104,94 +69,110 @@ export const EmployeeDashboard = () => {
 
   return (
     <Layout isAdmin={false}>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-sm text-gray-600">Welcome, {user?.personalDetails?.firstName}!</p>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={() => handleAction('checkin')} disabled={!canCheckIn || actionLoading}>
-              {actionLoading && canCheckIn ? 'Saving...' : 'Check In'}
-            </Button>
-            <Button variant="secondary" onClick={() => handleAction('checkout')} disabled={!canCheckOut || actionLoading}>
-              {actionLoading && canCheckOut ? 'Saving...' : 'Check Out'}
-            </Button>
-          </div>
-        </div>
-
-        {message && (
-          <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-            {message}
-          </div>
-        )}
-        {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-            {error}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <DashboardCard
-            title="Present This Month"
-            value={stats.totalPresent}
-            icon={CheckCircle}
-            trend="+2 this week"
-            trendUp
-          />
-          <DashboardCard
-            title="Total Leaves"
-            value={stats.totalLeaves}
-            icon={FileText}
-          />
-          <DashboardCard
-            title="Pending Leaves"
-            value={stats.pendingLeaves}
-            icon={Calendar}
-          />
-          <DashboardCard
-            title="Avg Hours"
-            value={`${stats.averageHours}h`}
-            icon={DollarSign}
-          />
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Attendance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentAttendance.length > 0 ? (
-              <div className="space-y-3">
-                {recentAttendance.map((record) => (
-                  <div key={record._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {new Date(record.date).toLocaleDateString()}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {record.checkIn && new Date(record.checkIn).toLocaleTimeString()} - {record.checkOut && new Date(record.checkOut).toLocaleTimeString()}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{record.workHours || 0}h</span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        record.status === 'present' ? 'bg-green-100 text-green-700' :
-                        record.status === 'absent' ? 'bg-red-100 text-red-700' :
-                        record.status === 'half-day' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-blue-100 text-blue-700'
-                      }`}>
-                        {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                      </span>
-                    </div>
+      <div className="space-y-8">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
+            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-5xl font-bold border-4 border-white shadow-lg">
+              {userName.charAt(0)}
+            </div>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-slate-800 mb-2">Welcome, {userName}!</h1>
+              <p className="text-slate-500 text-lg mb-6">{user?.employeeId}</p>
+              
+              <div className="flex flex-wrap items-center gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-5 h-5 rounded-full ${statusColor} border-2 border-white shadow`}></div>
+                    <span className="font-semibold text-slate-700">
+                      {todayAttendance?.status === 'present' ? 'Checked In' : 'Not Checked In'}
+                    </span>
                   </div>
-                ))}
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => handleAction('checkin')}
+                    disabled={!canCheckIn || actionLoading}
+                    className={`px-8 py-3 rounded-xl font-bold text-white transition-all ${
+                      canCheckIn 
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg' 
+                        : 'bg-slate-300 cursor-not-allowed'
+                    }`}
+                  >
+                    {actionLoading && canCheckIn ? 'Checking In...' : 'Check In'}
+                  </button>
+                  
+                  <button
+                    onClick={() => handleAction('checkout')}
+                    disabled={!canCheckOut || actionLoading}
+                    className={`px-8 py-3 rounded-xl font-bold text-white transition-all ${
+                      canCheckOut 
+                        ? 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 shadow-lg' 
+                        : 'bg-slate-300 cursor-not-allowed'
+                    }`}
+                  >
+                    {actionLoading && canCheckOut ? 'Checking Out...' : 'Check Out'}
+                  </button>
+                </div>
               </div>
-            ) : (
-              <p className="text-gray-500 text-center py-6">No attendance records</p>
-            )}
-          </CardContent>
-        </Card>
+
+              {message && (
+                <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+                  {message}
+                </div>
+              )}
+              {error && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                  {error}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                <Clock className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500">Attendance</p>
+                <p className="text-2xl font-bold text-slate-800">This Month</p>
+              </div>
+            </div>
+            <div className="text-4xl font-bold text-blue-600">18</div>
+            <p className="text-sm text-slate-500 mt-1">Working days</p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500">Leave Balance</p>
+                <p className="text-2xl font-bold text-slate-800">Remaining</p>
+              </div>
+            </div>
+            <div className="text-4xl font-bold text-purple-600">12</div>
+            <p className="text-sm text-slate-500 mt-1">Paid leaves</p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500">Payroll</p>
+                <p className="text-2xl font-bold text-slate-800">This Month</p>
+              </div>
+            </div>
+            <div className="text-4xl font-bold text-green-600">$5,650</div>
+            <p className="text-sm text-slate-500 mt-1">Net salary</p>
+          </div>
+        </div>
       </div>
     </Layout>
   );
