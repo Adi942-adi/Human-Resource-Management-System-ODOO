@@ -18,14 +18,20 @@ const ensureValidId = (id, res, label = 'Resource') => {
 
 // Check in
 router.post('/checkin', auth, async (req, res) => {
+  console.log('[DEBUG] Check-in request received for user:', req.user._id);
   try {
     const today = startOfDay(new Date());
+    console.log('[DEBUG] Today:', today);
+    
     const existingAttendance = await Attendance.findOne({
       employee: req.user._id,
       date: today
     });
+    
+    console.log('[DEBUG] Existing attendance:', existingAttendance);
 
     if (existingAttendance && existingAttendance.checkIn) {
+      console.log('[DEBUG] Already checked in');
       return res.status(400).json({ message: 'Already checked in today' });
     }
 
@@ -37,27 +43,36 @@ router.post('/checkin', auth, async (req, res) => {
     attendance.checkIn = new Date();
     attendance.status = 'present';
     await attendance.save();
-
+    
+    console.log('[DEBUG] Check-in successful, attendance saved:', attendance);
     res.json(attendance);
   } catch (error) {
+    console.error('[ERROR] Check-in failed:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 // Check out
 router.post('/checkout', auth, async (req, res) => {
+  console.log('[DEBUG] Check-out request received for user:', req.user._id);
   try {
     const today = startOfDay(new Date());
+    console.log('[DEBUG] Today:', today);
+    
     const attendance = await Attendance.findOne({
       employee: req.user._id,
       date: today
     });
+    
+    console.log('[DEBUG] Attendance for check-out:', attendance);
 
     if (!attendance || !attendance.checkIn) {
+      console.log('[DEBUG] No check-in found');
       return res.status(400).json({ message: 'No check-in record found for today' });
     }
 
     if (attendance.checkOut) {
+      console.log('[DEBUG] Already checked out');
       return res.status(400).json({ message: 'Already checked out today' });
     }
 
@@ -70,9 +85,11 @@ router.post('/checkout', auth, async (req, res) => {
     attendance.workHours = Math.round(workHours * 100) / 100;
 
     await attendance.save();
-
+    
+    console.log('[DEBUG] Check-out successful, attendance saved:', attendance);
     res.json(attendance);
   } catch (error) {
+    console.error('[ERROR] Check-out failed:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

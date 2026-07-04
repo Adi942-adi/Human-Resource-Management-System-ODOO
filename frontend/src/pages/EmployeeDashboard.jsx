@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/layout/Layout';
 import { DashboardCard } from '../components/ui/DashboardCard';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
 import { Calendar, FileText, DollarSign, CheckCircle } from 'lucide-react';
 import { attendanceService, leaveService, payrollService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -9,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 export const EmployeeDashboard = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [todayAttendance, setTodayAttendance] = useState(null);
   const [stats, setStats] = useState({
     totalPresent: 0,
     totalLeaves: 0,
@@ -17,6 +19,8 @@ export const EmployeeDashboard = () => {
   });
   const [recentAttendance, setRecentAttendance] = useState([]);
   const [error, setError] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     fetchDashboardData();
@@ -26,24 +30,25 @@ export const EmployeeDashboard = () => {
     try {
       setLoading(true);
       setError('');
-
-      // Fetch attendance data for this month
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const today = now.toISOString().split('T')[0];
 
-      const attendanceResponse = await attendanceService.getMyAttendance(
-        monthStart.toISOString().split('T')[0],
-        monthEnd.toISOString().split('T')[0]
-      );
+      const [attendanceResponse, todayResponse, leaveResponse] = await Promise.all([
+        attendanceService.getMyAttendance(
+          monthStart.toISOString().split('T')[0],
+          monthEnd.toISOString().split('T')[0]
+        ),
+        attendanceService.getMyAttendance(today, today),
+        leaveService.getMyLeaves(),
+      ]);
 
       const attendanceData = attendanceResponse.data;
       const presentCount = attendanceData.filter(a => a.status === 'present').length;
       const totalHours = attendanceData.reduce((sum, a) => sum + (a.workHours || 0), 0);
       const avgHours = attendanceData.length > 0 ? (totalHours / attendanceData.length).toFixed(1) : 0;
 
-      // Fetch leave data
-      const leaveResponse = await leaveService.getMyLeaves();
       const leaveData = leaveResponse.data;
       const totalLeavesCount = leaveData.length;
       const pendingLeavesCount = leaveData.filter(l => l.status === 'pending').length;
@@ -54,8 +59,8 @@ export const EmployeeDashboard = () => {
         pendingLeaves: pendingLeavesCount,
         averageHours: avgHours,
       });
-
       setRecentAttendance(attendanceData.slice(0, 5));
+      setTodayAttendance(todayResponse.data[0] || null);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
       setError('Failed to load dashboard data');
@@ -63,6 +68,29 @@ export const EmployeeDashboard = () => {
       setLoading(false);
     }
   };
+
+  const handleAction = async (action) => {
+    try {
+      setActionLoading(true);
+      setMessage('');
+      setError('');
+      if (action === 'checkin') {
+        await attendanceService.checkIn();
+        setMessage('Checked in successfully');
+      } else {
+        await attendanceService.checkOut();
+        setMessage('Checked out successfully');
+      }
+      await fetchDashboardData();
+    } catch (err) {
+      setError(err.response?.data?.message || `Failed to ${action === 'checkin' ? 'check in' : 'check out'}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const canCheckIn = !todayAttendance?.checkIn;
+  const canCheckOut = Boolean(todayAttendance?.checkIn && !todayAttendance?.checkOut);
 
   if (loading) {
     return (
@@ -77,11 +105,26 @@ export const EmployeeDashboard = () => {
   return (
     <Layout isAdmin={false}>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-600">Welcome, {user?.personalDetails?.firstName}!</p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-sm text-gray-600">Welcome, {user?.personalDetails?.firstName}!</p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => handleAction('checkin')} disabled={!canCheckIn || actionLoading}>
+              {actionLoading && canCheckIn ? 'Saving...' : 'Check In'}
+            </Button>
+            <Button variant="secondary" onClick={() => handleAction('checkout')} disabled={!canCheckOut || actionLoading}>
+              {actionLoading && canCheckOut ? 'Saving...' : 'Check Out'}
+            </Button>
+          </div>
         </div>
 
+        {message && (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+            {message}
+          </div>
+        )}
         {error && (
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             {error}
