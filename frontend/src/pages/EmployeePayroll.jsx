@@ -3,8 +3,9 @@ import { Layout } from '../components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/Table';
 import { StatusBadge } from '../components/ui/StatusBadge';
+import { Button } from '../components/ui/Button';
 import { payrollService } from '../services/api';
-import { format } from 'date-fns';
+import { Download } from 'lucide-react';
 
 export const EmployeePayroll = () => {
   const [payroll, setPayroll] = useState([]);
@@ -15,12 +16,9 @@ export const EmployeePayroll = () => {
     const fetchPayroll = async () => {
       try {
         setLoading(true);
-        const now = new Date();
-        const month = now.getMonth() + 1; // 1-12
-        const year = now.getFullYear();
-        
-        const response = await payrollService.getMyPayroll(month, year);
-        setPayroll(Array.isArray(response.data) ? response.data : [response.data]);
+        // Fetch all payroll records (no filter)
+        const response = await payrollService.getMyPayroll();
+        setPayroll(Array.isArray(response.data) ? response.data : []);
         setError('');
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load payroll data');
@@ -32,6 +30,34 @@ export const EmployeePayroll = () => {
 
     fetchPayroll();
   }, []);
+
+  const downloadPayslip = (record) => {
+    // Simple payslip download simulation
+    const payslipContent = `
+PAYSLIP
+Employee: ${record.employee?.personalDetails?.firstName || 'Employee'} ${record.employee?.personalDetails?.lastName || ''}
+Month: ${record.month} ${record.year}
+-----------------------------------
+Basic Salary: $${record.basicSalary?.toFixed(2) || '0.00'}
+HRA: $${record.hra?.toFixed(2) || '0.00'}
+DA: $${record.da?.toFixed(2) || '0.00'}
+Other Allowances: $${record.otherAllowances?.toFixed(2) || '0.00'}
+-----------------------------------
+Gross Salary: $${(record.basicSalary + record.hra + record.da + record.otherAllowances).toFixed(2)}
+Deductions: $${record.deductions?.toFixed(2) || '0.00'}
+-----------------------------------
+Net Salary: $${record.netSalary?.toFixed(2) || '0.00'}
+Status: ${record.status.toUpperCase()}
+    `;
+    
+    const blob = new Blob([payslipContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payslip-${record.month}-${record.year}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (loading) {
     return (
@@ -57,34 +83,51 @@ export const EmployeePayroll = () => {
             <CardTitle>Payroll History</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Month</TableHead>
-                  <TableHead>Basic</TableHead>
-                  <TableHead>HRA</TableHead>
-                  <TableHead>Allowances</TableHead>
-                  <TableHead>Deductions</TableHead>
-                  <TableHead>Net</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payroll.map((record) => (
-                  <TableRow key={record._id}>
-                    <TableCell>
-                      {format(new Date(record.payrollMonth), 'MMM yyyy')}
-                    </TableCell>
-                    <TableCell>${record.basicSalary?.toFixed(2)}</TableCell>
-                    <TableCell>${record.hra?.toFixed(2) || '0.00'}</TableCell>
-                    <TableCell>${record.allowances?.toFixed(2) || '0.00'}</TableCell>
-                    <TableCell>${record.totalDeductions?.toFixed(2) || '0.00'}</TableCell>
-                    <TableCell>${record.netSalary?.toFixed(2)}</TableCell>
-                    <TableCell><StatusBadge status={record.status} /></TableCell>
+            {payroll.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No payroll records found
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Month</TableHead>
+                    <TableHead>Basic</TableHead>
+                    <TableHead>HRA</TableHead>
+                    <TableHead>DA</TableHead>
+                    <TableHead>Other Allowances</TableHead>
+                    <TableHead>Deductions</TableHead>
+                    <TableHead>Net</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {payroll.map((record) => (
+                    <TableRow key={record._id}>
+                      <TableCell>{record.month} {record.year}</TableCell>
+                      <TableCell>${record.basicSalary?.toFixed(2) || '0.00'}</TableCell>
+                      <TableCell>${record.hra?.toFixed(2) || '0.00'}</TableCell>
+                      <TableCell>${record.da?.toFixed(2) || '0.00'}</TableCell>
+                      <TableCell>${record.otherAllowances?.toFixed(2) || '0.00'}</TableCell>
+                      <TableCell>${record.deductions?.toFixed(2) || '0.00'}</TableCell>
+                      <TableCell>${record.netSalary?.toFixed(2) || '0.00'}</TableCell>
+                      <TableCell><StatusBadge status={record.status} /></TableCell>
+                      <TableCell>
+                        <Button 
+                          size="sm" 
+                          variant="secondary"
+                          onClick={() => downloadPayslip(record)}
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          Payslip
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
