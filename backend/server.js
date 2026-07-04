@@ -9,7 +9,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:3001,http://localhost:3000')
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:3001,http://localhost:3000,http://localhost:3002')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
