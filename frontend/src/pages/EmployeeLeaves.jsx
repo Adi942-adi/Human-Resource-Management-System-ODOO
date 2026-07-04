@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { leaveService } from '../services/api';
 import { differenceInCalendarDays, format } from 'date-fns';
+import { useAuth } from '../context/AuthContext';
 
 const initialForm = {
   leaveType: 'paid',
@@ -17,6 +18,7 @@ const initialForm = {
 };
 
 export const EmployeeLeaves = () => {
+  const { user } = useAuth();
   const [leaves, setLeaves] = useState([]);
   const [formData, setFormData] = useState(initialForm);
   const [showForm, setShowForm] = useState(false);
@@ -87,7 +89,7 @@ export const EmployeeLeaves = () => {
 
   if (loading) {
     return (
-      <Layout isAdmin={false}>
+      <Layout isAdmin={user?.role === 'admin' || user?.role === 'hr'}>
         <div className="flex min-h-[60vh] items-center justify-center text-gray-500">
           Loading leave data...
         </div>
@@ -96,7 +98,7 @@ export const EmployeeLeaves = () => {
   }
 
   return (
-    <Layout isAdmin={false}>
+    <Layout isAdmin={user?.role === 'admin' || user?.role === 'hr'}>
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>

@@ -142,7 +142,10 @@ export const AdminEmployees = () => {
       setFormData(emptyForm);
       await fetchEmployees();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save employee');
+      const errorMsg = err.response?.data?.errors && Array.isArray(err.response.data.errors)
+        ? err.response.data.errors.map(e => e.msg).join(', ')
+        : (err.response?.data?.message || 'Failed to save employee');
+      setError(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -196,7 +199,7 @@ export const AdminEmployees = () => {
             <CardContent>
               <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Employee ID</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Employee ID</label>
                   <Input
                     value={formData.employeeId}
                     onChange={(event) => updateField('employeeId', event.target.value)}
@@ -205,7 +208,7 @@ export const AdminEmployees = () => {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Email</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
                   <Input
                     type="email"
                     value={formData.email}
@@ -215,7 +218,7 @@ export const AdminEmployees = () => {
                 </div>
                 {!editingEmployee && (
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">Temporary Password</label>
+                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Temporary Password</label>
                     <Input
                       type="password"
                       value={formData.password}
@@ -225,27 +228,27 @@ export const AdminEmployees = () => {
                   </div>
                 )}
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">First Name</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</label>
                   <Input value={formData.firstName} onChange={(event) => updateField('firstName', event.target.value)} required />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Last Name</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</label>
                   <Input value={formData.lastName} onChange={(event) => updateField('lastName', event.target.value)} required />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Phone</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Phone</label>
                   <Input value={formData.phone} onChange={(event) => updateField('phone', event.target.value)} />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Department</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Department</label>
                   <Input value={formData.department} onChange={(event) => updateField('department', event.target.value)} />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Designation</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Designation</label>
                   <Input value={formData.designation} onChange={(event) => updateField('designation', event.target.value)} />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Join Date</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Join Date</label>
                   <Input type="date" value={formData.joinDate} onChange={(event) => updateField('joinDate', event.target.value)} />
                 </div>
                 <div>
@@ -253,36 +256,36 @@ export const AdminEmployees = () => {
                   <select
                     value={formData.employmentType}
                     onChange={(event) => updateField('employmentType', event.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    className="w-full bg-white/70 dark:bg-[#131129]/70 border border-gray-200 dark:border-[#2d225c]/55 rounded-xl px-4 py-2.5 text-xs font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED] transition-all duration-300"
                   >
-                    <option value="Full-time">Full-time</option>
-                    <option value="Part-time">Part-time</option>
-                    <option value="Contract">Contract</option>
-                    <option value="Intern">Intern</option>
+                    <option value="Full-time" className="bg-white dark:bg-[#131129]">Full-time</option>
+                    <option value="Part-time" className="bg-white dark:bg-[#131129]">Part-time</option>
+                    <option value="Contract" className="bg-white dark:bg-[#131129]">Contract</option>
+                    <option value="Intern" className="bg-white dark:bg-[#131129]">Intern</option>
                   </select>
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Basic Salary</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Basic Salary</label>
                   <Input type="number" min="0" value={formData.basicSalary} onChange={(event) => updateField('basicSalary', event.target.value)} />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">HRA</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">HRA</label>
                   <Input type="number" min="0" value={formData.hra} onChange={(event) => updateField('hra', event.target.value)} />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">DA</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">DA</label>
                   <Input type="number" min="0" value={formData.da} onChange={(event) => updateField('da', event.target.value)} />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Other Allowances</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Other Allowances</label>
                   <Input type="number" min="0" value={formData.otherAllowances} onChange={(event) => updateField('otherAllowances', event.target.value)} />
                 </div>
                 <div className="md:col-span-2 lg:col-span-3">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Address</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
                   <textarea
                     value={formData.address}
                     onChange={(event) => updateField('address', event.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    className="w-full bg-white/70 dark:bg-[#131129]/70 border border-gray-200 dark:border-[#2d225c]/55 rounded-xl px-4 py-2.5 text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-450 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED] transition-all duration-300"
                     rows="2"
                   />
                 </div>

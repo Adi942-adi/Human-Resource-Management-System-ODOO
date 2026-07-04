@@ -65,79 +65,79 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-slate-800 border-slate-700 shadow-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
         <CardHeader className="text-center pb-2">
-          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl flex items-center justify-center mb-6 shadow-lg">
-            <Building2 className="w-10 h-10 text-white" />
+          <div className="mx-auto w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4">
+            <Building2 className="w-8 h-8 text-white" />
           </div>
-          <CardTitle className="text-3xl font-bold text-white">Human Resource Management System</CardTitle>
-          <p className="text-slate-400 mt-4 text-lg">Sign in to your account</p>
+          <CardTitle className="text-2xl">Welcome Back</CardTitle>
+          <p className="text-gray-500 mt-2">Sign in to your HRMS account</p>
         </CardHeader>
         <CardContent>
           {error && (
-            <div className="mb-6 p-4 bg-red-900/30 border border-red-700 rounded-xl text-red-300 text-sm">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {error}
             </div>
           )}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-300">Email</label>
+              <label className="text-sm font-medium text-gray-700">Email</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   type="email"
-                  placeholder="you@company.com"
+                  placeholder="admin@example.com"
                   value={email}
                   onChange={(e) => handleChange(e, 'email')}
-                  className={`pl-12 bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-purple-500 focus:ring-purple-500 ${formErrors.email ? 'border-red-500' : ''}`}
+                  className={`pl-10 ${formErrors.email ? 'border-red-500' : ''}`}
                   disabled={loading}
                 />
               </div>
               {formErrors.email && (
-                <p className="text-xs text-red-400 mt-2">{formErrors.email}</p>
+                <p className="text-xs text-red-600">{formErrors.email}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-300">Password</label>
+              <label className="text-sm font-medium text-gray-700">Password</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => handleChange(e, 'password')}
-                  className={`pl-12 bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-purple-500 focus:ring-purple-500 ${formErrors.password ? 'border-red-500' : ''}`}
+                  className={`pl-10 ${formErrors.password ? 'border-red-500' : ''}`}
                   disabled={loading}
                 />
               </div>
               {formErrors.password && (
-                <p className="text-xs text-red-400 mt-2">{formErrors.password}</p>
+                <p className="text-xs text-red-600">{formErrors.password}</p>
               )}
             </div>
 
-            <div className="bg-slate-700/50 p-4 rounded-xl text-sm text-slate-300 border border-slate-600">
-              <p className="font-semibold mb-3 text-purple-300">Demo Credentials:</p>
-              <p className="mb-1"><span className="font-bold">Admin:</span> admin@example.com / password123</p>
-              <p><span className="font-bold">Employee:</span> employee@example.com / password123</p>
+            <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-700">
+              <p className="font-medium mb-2">Demo Credentials:</p>
+              <p>Admin: admin@example.com / password123</p>
+              <p>Employee: employee@example.com / password123</p>
             </div>
 
             <Button 
               type="submit" 
-              className="w-full mt-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white py-4 text-lg font-bold rounded-xl shadow-lg transition-all"
+              className="w-full mt-6"
               disabled={loading}
             >
               {loading ? 'Signing In...' : (
                 <>
-                  Sign In <ArrowRight className="w-5 h-5 ml-2" />
+                  Sign In <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               )}
             </Button>
 
-            <p className="text-center text-sm text-slate-400 mt-6">
+            <p className="text-center text-sm text-gray-600 mt-4">
               Don't have an account?{' '}
-              <Link to="/register" className="text-purple-400 hover:text-purple-300 hover:underline font-semibold">
+              <Link to="/register" className="text-blue-600 hover:underline font-medium">
                 Register here
               </Link>
             </p>

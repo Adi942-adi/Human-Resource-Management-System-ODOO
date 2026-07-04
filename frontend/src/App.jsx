@@ -11,6 +11,8 @@ import { AdminEmployees } from './pages/AdminEmployees';
 import { AdminAttendance } from './pages/AdminAttendance';
 import { AdminLeaves } from './pages/AdminLeaves';
 import { AdminPayroll } from './pages/AdminPayroll';
+import { AdminReports } from './pages/AdminReports';
+import { AdminSettings } from './pages/AdminSettings';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 
@@ -108,6 +110,22 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <AdminPayroll />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/reports" 
+        element={
+          <ProtectedRoute>
+            <AdminReports />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/settings" 
+        element={
+          <ProtectedRoute>
+            <AdminSettings />
           </ProtectedRoute>
         } 
       />

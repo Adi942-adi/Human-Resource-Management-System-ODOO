@@ -18,7 +18,7 @@ const ProtectedRoute = ({ children, role }) => {
   }
 
   // Check role-based access
-  if (role === 'employee' && user.role !== 'employee') {
+  if (role === 'employee' && user.role !== 'employee' && user.role !== 'admin' && user.role !== 'hr') {
     return <Navigate to="/admin/dashboard" replace />;
   }
 

@@ -97,9 +97,7 @@ router.get('/my', auth, async (req, res) => {
       query.year = Number(year);
     }
 
-    const payroll = await Payroll.find(query)
-      .populate('employee', 'employeeId email personalDetails.firstName personalDetails.lastName')
-      .sort({ year: -1, createdAt: -1 });
+    const payroll = await Payroll.find(query).sort({ year: -1, createdAt: -1 });
     res.json(payroll);
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });

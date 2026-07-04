@@ -17,7 +17,6 @@ export const EmployeeAttendance = () => {
 
   const fetchAttendance = async () => {
     try {
-      console.log('📅 Fetching attendance data...');
       setLoading(true);
       setError('');
       const now = new Date();
@@ -25,21 +24,14 @@ export const EmployeeAttendance = () => {
       const end = endOfMonth(now);
       const today = format(now, 'yyyy-MM-dd');
 
-      console.log('📅 Date range:', format(start, 'yyyy-MM-dd'), 'to', format(end, 'yyyy-MM-dd'));
-
       const [monthResponse, todayResponse] = await Promise.all([
         attendanceService.getMyAttendance(format(start, 'yyyy-MM-dd'), format(end, 'yyyy-MM-dd')),
         attendanceService.getMyAttendance(today, today),
       ]);
 
-      console.log('📅 Month response:', monthResponse.data);
-      console.log('📅 Today response:', todayResponse.data);
-
       setAttendance(monthResponse.data);
       setTodayAttendance(todayResponse.data[0] || null);
-      console.log('✅ Attendance data loaded');
     } catch (err) {
-      console.error('❌ Error fetching attendance:', err);
       setError(err.response?.data?.message || 'Failed to load attendance data');
     } finally {
       setLoading(false);
@@ -58,25 +50,19 @@ export const EmployeeAttendance = () => {
   }, [attendance]);
 
   const handleAction = async (action) => {
-    console.log('🔘 Clicked button:', action);
     try {
       setActionLoading(true);
       setMessage('');
       setError('');
       if (action === 'checkin') {
-        console.log('🟢 Calling checkIn service...');
-        const response = await attendanceService.checkIn();
-        console.log('🟢 CheckIn response:', response.data);
+        await attendanceService.checkIn();
         setMessage('Checked in successfully');
       } else {
-        console.log('🔴 Calling checkOut service...');
-        const response = await attendanceService.checkOut();
-        console.log('🔴 CheckOut response:', response.data);
+        await attendanceService.checkOut();
         setMessage('Checked out successfully');
       }
       await fetchAttendance();
     } catch (err) {
-      console.error('❌ Error in handleAction:', err);
       setError(err.response?.data?.message || `Failed to ${action === 'checkin' ? 'check in' : 'check out'}`);
     } finally {
       setActionLoading(false);
@@ -85,9 +71,6 @@ export const EmployeeAttendance = () => {
 
   const canCheckIn = !todayAttendance?.checkIn;
   const canCheckOut = Boolean(todayAttendance?.checkIn && !todayAttendance?.checkOut);
-
-  console.log('🔘 canCheckIn:', canCheckIn, 'canCheckOut:', canCheckOut);
-  console.log('🔘 todayAttendance:', todayAttendance);
 
   if (loading) {
     return (

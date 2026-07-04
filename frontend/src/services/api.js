@@ -12,10 +12,8 @@ const api = axios.create({
 // Add token to requests
 api.interceptors.request.use(
   (config) => {
-    console.log('📡 API Request:', config.method?.toUpperCase(), config.url);
     const token = localStorage.getItem('token');
     if (token) {
-      console.log('🔑 Token found, adding to headers');
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -25,12 +23,8 @@ api.interceptors.request.use(
 
 // Handle responses and errors
 api.interceptors.response.use(
-  (response) => {
-    console.log('✅ API Response:', response.status, response.config.url);
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error('❌ API Error:', error.response?.status, error.response?.data, error.config?.url);
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       window.location.href = '/login';
@@ -69,14 +63,10 @@ export const userService = {
 
 // Attendance endpoints
 export const attendanceService = {
-  checkIn: () => {
-    console.log('🟢 Calling checkIn()...');
-    return api.post('/attendance/checkin');
-  },
-  checkOut: () => {
-    console.log('🔴 Calling checkOut()...');
-    return api.post('/attendance/checkout');
-  },
+  checkIn: () =>
+    api.post('/attendance/checkin'),
+  checkOut: () =>
+    api.post('/attendance/checkout'),
   getMyAttendance: (startDate, endDate) =>
     api.get('/attendance/my', { params: { startDate, endDate } }),
   getAttendanceRange: (startDate, endDate, employeeId) =>

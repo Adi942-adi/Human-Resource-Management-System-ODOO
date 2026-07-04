@@ -82,9 +82,7 @@ export const AdminPayroll = () => {
     e.preventDefault();
     try {
       if (editingPayroll) {
-        // Don't send month/year when editing (they're unique)
-        const { month, year, ...updateData } = formData;
-        await payrollService.updatePayroll(editingPayroll._id, updateData);
+        await payrollService.updatePayroll(editingPayroll._id, formData);
       } else {
         await payrollService.createPayroll(formData);
       }
